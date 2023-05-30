@@ -105,7 +105,9 @@ class userController {
         email: user.email,
       };
       const access_token = generateToken(response);
-      res.status(200).json({ access_token });
+      res.status(200).json({ 
+        status : 'login success',
+        access_token });
     } catch (err) {
       res
         .status(err?.code || 500)
@@ -140,9 +142,7 @@ class userController {
           id: id,
         }, returning: true
      });
-      res.status(200).json({
-        users : updateUser[1]
-      });
+      res.status(200).json(updateUser[1][0]);
     } catch (err) {
       // console.log(err);
       next(err);
@@ -160,7 +160,10 @@ class userController {
       });
       res
         .status(200)
-        .json({ message: "your account has been successfully deleted" });
+        .json({ 
+          status: "success",
+          message: "your account has been successfully deleted" 
+        });
     } catch (err) {
       // console.log(err);
       next(err);
