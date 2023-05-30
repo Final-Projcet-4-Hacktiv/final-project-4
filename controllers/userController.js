@@ -95,6 +95,7 @@ class userController {
       if (!comparedPassword) {
         throw {
           code: 400,
+          status : 'login failed',
           message: "Invalid email/password",
         };
       }
@@ -107,10 +108,11 @@ class userController {
       const access_token = generateToken(response);
       res.status(200).json({ 
         status : 'login success',
-        access_token });
+        access_token 
+      });
     } catch (err) {
-      res
-        .status(err?.code || 500)
+
+      res.status(err?.code || 500)
         .json({ message: err?.message || "Internal server error" });
     }
   }

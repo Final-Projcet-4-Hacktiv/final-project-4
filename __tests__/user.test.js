@@ -141,6 +141,9 @@ describe('POST /users/login', () => {
                 }
                 expect(400)
                 expect(res.body).toHaveProperty('message', 'Invalid email/password');
+                expect(res.body).not.toHaveProperty('status', 'login success');
+                expect(res.body).not.toHaveProperty('access_token');
+                expect(res.body).not.toHaveProperty('status', 'login success')
                 done();
             })
     })
