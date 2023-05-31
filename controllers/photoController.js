@@ -61,9 +61,7 @@ class photoController {
 
             const newPhoto = await Photo.create(data, { returning: true });
             if (newPhoto) {
-                res.status(201).json({
-                    photo: newPhoto,
-                });
+                res.status(201).json(newPhoto);
             }
         } catch (err) {
             // console.log(err);
@@ -109,6 +107,7 @@ class photoController {
             });
             if (photo) {
                 res.status(200).json({
+                    status : "success",
                     message: "Your Photo has been successfully deleted",
                 });
             }
