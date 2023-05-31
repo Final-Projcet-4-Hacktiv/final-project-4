@@ -2,15 +2,31 @@ const request = require('supertest');
 const app = require('../app');
 const { User } = require('../models');
 
+const login = {
+    email: 'admin@mail.com',
+    password: '123456',
+}
+
+const createUser = async () => {
+    const result = await User.create({
+        id: 1,
+        full_name: 'admin',
+        email: 'admin@mail.com',
+        password: '123456',
+        username: 'admin',
+        profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+        age: 20,
+        phone_number: '081234567'
+    })
+}
+
 //test api register
 describe('POST /users/register', () => {
     afterAll(async () => {
         //destroy data
         try {
             await User.destroy({
-                where: {
-                    
-                }
+                where: {}
             })
         } catch (err) {
             console.log(err);
@@ -89,15 +105,7 @@ describe('POST /users/login', () => {
 
     beforeAll(async () => {
         try {
-            const result = await User.create({
-                full_name: 'admin',
-                email: 'admin@mail.com',
-                password: '123456',
-                username: 'admin',
-                profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
-                age: 20,
-                phone_number: '081234567'
-            })
+            await createUser();
         } catch (error) {
             console.log(error);
         }
@@ -105,10 +113,7 @@ describe('POST /users/login', () => {
     it('should send response with 200 status code', (done) => {
         request(app)
             .post('/users/login')
-            .send({
-                email : 'admin@mail.com',
-                password : '123456'
-            })
+            .send(login)
             .expect(200)
             .end((err, res) => {
                 if (err) {
@@ -151,8 +156,6 @@ describe('POST /users/login', () => {
 
 // //test api edit user
 describe('PUT /users/:id', () => {
-    let access_token = '';
-    let id = 0;
     afterAll(async () => {
         //destroy data
         try {
@@ -165,16 +168,7 @@ describe('PUT /users/:id', () => {
     })
     beforeAll(async () => {
         try {
-            const result = await User.create({
-                id : 1,
-                full_name: 'admin',
-                email: 'admin@mail.com',
-                password: '123456',
-                username: 'admin',
-                profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
-                age: 20,
-                phone_number: '62873647'
-            })
+            await createUser();
         } catch (error) {
             console.log(error);
         }
@@ -184,10 +178,7 @@ describe('PUT /users/:id', () => {
         //login first
         request(app)
             .post('/users/login')
-            .send({
-                email : 'admin@mail.com',
-                password : '123456'
-            })
+            .send(login)
             .expect(200)
             .end((err, res) => {
                 if (err) {
@@ -225,15 +216,12 @@ describe('PUT /users/:id', () => {
         
     })
 
-    //error response
+    //error response (no token)
     it('should send response with 400 status code', (done) => {
         //login first
         request(app)
             .post('/users/login')
-            .send({
-                email : 'admin@mail.com',
-                password : '123456'
-            })
+            .send(login)
             .expect(200)
             .end((err, res) => {
                 if (err) {
@@ -265,6 +253,42 @@ describe('PUT /users/:id', () => {
             })
         })
     })
+    //error response user not found
+    it('should send response with 404 status code', (done) => {
+        //login first
+        request(app)
+            .post('/users/login')
+            .send(login)
+            .expect(200)
+            .end((err, res) => {
+                if (err) {
+                    done(err);
+                }
+                const token = res.body.access_token;
+                request(app)
+                    .put(`/users/2`)
+                    .set('token', token)
+                    .send({
+                        full_name: 'admin',
+                        email: 'admin@mail.com',
+                        password: '123456',
+                        username: 'admin',
+                        profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+                        age: 20,
+                        phone_number: '62873647'
+                    })
+                    .expect(404)
+                    .end((err, res) => {
+                        if (err) {
+                            done(err);
+                        } else {
+                            console.log(res.body, 'ini res body');
+                        }
+                        expect(res.body).toHaveProperty('message', 'User not found');
+                        done();
+                    })
+                })
+    })
  })
 
 //test api delete user
@@ -281,16 +305,7 @@ describe('DELETE /users/:id', () => {
     })
     beforeAll(async () => {
         try {
-            const result = await User.create({
-                id : 1,
-                full_name: 'admin',
-                email: 'admin@mail.com',
-                password: '123456',
-                username: 'admin',
-                profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
-                age: 20,
-                phone_number: '62873647'
-            })
+            await createUser();
         } catch (error) {
             console.log(error);
         }
@@ -300,10 +315,7 @@ describe('DELETE /users/:id', () => {
         //login first
         request(app)
             .post('/users/login')
-            .send({
-                email : 'admin@mail.com',
-                password : '123456'
-            })
+            .send(login)
             .expect(200)
             .end((err, res) => {
                 if (err) {
@@ -329,33 +341,45 @@ describe('DELETE /users/:id', () => {
                     })
             })
     })
-    //error response
+    //error response (no token)
     it('should send response with 400 status code', (done) => {
-        //login first
         request(app)
-            .post('/users/login')
-            .send({
-                email : 'admin@mail.com',
-                password : '123456'
-            })
-            .expect(404)
+            .delete(`/users/1`)
+            .expect(401)
             .end((err, res) => {
                 if (err) {
                     done(err);
                 }
-                const token = res.body.access_token;
-                request(app)
-                    .delete(`/users/1`)
-                    .expect(401)
-                    .end((err, res) => {
-                        if (err) {
-                            done(err);
-                        }
-                        expect(res.body).toHaveProperty('name', 'JsonWebTokenError');
-                        expect(res.body).not.toHaveProperty('access_token', expect.any(String));
-                        expect(res.body).toHaveProperty('message', 'jwt must be provided');
-                        done();
-            })
+                expect(res.body).toHaveProperty('name', 'JsonWebTokenError');
+                expect(res.body).not.toHaveProperty('access_token', expect.any(String));
+                expect(res.body).toHaveProperty('message', 'jwt must be provided');
+                done();
         })
+    })
+    
+    //error response user not found
+    it('should send response with 404 status code', async () => {
+        await request(app)
+            .post('/users/register')
+            .send({
+                full_name: 'admin',
+                email: 'admin@mail.com',
+                password: '123456',
+                username: 'admin',
+                profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+                age: 20,
+                phone_number: '62873647'
+            })
+        //login first
+        const res = await request(app)
+            .post('/users/login')
+            .send(login)
+            .expect(200)
+            const { access_token } = res.body
+         const response = await request(app)
+                .delete(`/users/10`)
+                .set('token', access_token)
+                .expect(404)
+                expect(response.body).toHaveProperty('message', 'User not found');
     })
 })
