@@ -6,6 +6,8 @@
   "scripts": {
     "test": "NODE_ENV=test jest --detectOpenHandles --forceExit",
     "test:photos": "NODE_ENV=test jest --detectOpenHandles --forceExit --testPathPattern=photo.test.js",
+    "test:users": "NODE_ENV=test jest --detectOpenHandles --forceExit --testPathPattern=user.test.js",
+    "test:comments": "NODE_ENV=test jest --detectOpenHandles --forceExit --testPathPattern=comment.test.js",
     "start": "nodemon app.js",
     "db:create:test" : "NODE_ENV=test npx sequelize db:create",
     "db:migrate:test" : "NODE_ENV=test npx sequelize db:migrate",
