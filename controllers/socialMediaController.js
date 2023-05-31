@@ -90,6 +90,7 @@ class SocialMediaController {
 
       if (deletedSocmed) {
         return res.status(200).json({
+          status: "success",
           message: "Your social media has been successfully deleted",
         });
       }
