@@ -18,6 +18,7 @@ const createUser = async () => {
         age: 20,
         phone_number: '081234567'
     })
+    return result;
 }
 
 //test api register
