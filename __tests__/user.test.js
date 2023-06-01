@@ -84,6 +84,13 @@ describe('POST /users/register', () => {
                     }
                     expect(400)
                     expect(res.body).toHaveProperty('message', 'Invalid email format');
+                    expect(res.body).not.toHaveProperty('id', expect.any(Number));
+                    expect(res.body).not.toHaveProperty('email', 'admin@mail.com');
+                    expect(res.body).not.toHaveProperty('password', expect.any(String));
+                    expect(res.body).not.toHaveProperty('username', 'admin');
+                    expect(res.body).not.toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
+                    expect(res.body).not.toHaveProperty('age', 20);
+                    expect(res.body).not.toHaveProperty('phone_number', 62873647);
                     done();
                 })
         });
@@ -249,6 +256,13 @@ describe('PUT /users/:id', () => {
                 expect(res.body).toHaveProperty('name', 'JsonWebTokenError');
                 expect(res.body).not.toHaveProperty('access_token', expect.any(String));
                 expect(res.body).toHaveProperty('message', 'jwt must be provided');
+                expect(res.body).not.toHaveProperty('id');
+                expect(res.body).not.toHaveProperty('email');
+                expect(res.body).not.toHaveProperty('password');
+                expect(res.body).not.toHaveProperty('username');
+                expect(res.body).not.toHaveProperty('profile_img_url');
+                expect(res.body).not.toHaveProperty('age');
+                expect(res.body).not.toHaveProperty('phone_number');
                 done();
             })
         })
@@ -285,6 +299,14 @@ describe('PUT /users/:id', () => {
                             console.log(res.body, 'ini res body');
                         }
                         expect(res.body).toHaveProperty('message', 'User not found');
+                        expect(res.body).not.toHaveProperty('access_token', expect.any(String));
+                        expect(res.body).not.toHaveProperty('id');
+                        expect(res.body).not.toHaveProperty('email');
+                        expect(res.body).not.toHaveProperty('password');
+                        expect(res.body).not.toHaveProperty('username');
+                        expect(res.body).not.toHaveProperty('profile_img_url');
+                        expect(res.body).not.toHaveProperty('age');
+                        expect(res.body).not.toHaveProperty('phone_number');
                         done();
                     })
                 })
@@ -350,9 +372,11 @@ describe('DELETE /users/:id', () => {
                 if (err) {
                     done(err);
                 }
+                expect(401)
                 expect(res.body).toHaveProperty('name', 'JsonWebTokenError');
                 expect(res.body).not.toHaveProperty('access_token', expect.any(String));
                 expect(res.body).toHaveProperty('message', 'jwt must be provided');
+                expect(res.body).not.toHaveProperty('status', 'success');
                 done();
         })
     })
@@ -381,5 +405,8 @@ describe('DELETE /users/:id', () => {
                 .set('token', access_token)
                 .expect(404)
                 expect(response.body).toHaveProperty('message', 'User not found');
+                expect(res.body).not.toHaveProperty('status', 'success');
+                expect(res.body).not.toHaveProperty('message', 'your account has been successfully deleted');
+                expect(res.body).not.toHaveProperty('message', 'jwt must be provided');
     })
 })

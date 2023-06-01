@@ -8,6 +8,11 @@ const login = {
     password: '123456',
 }
 
+const login2 = {
+    email: 'user@mail.com',
+    password: '123456',  
+}
+
 const socialmedia = {
     name: 'facebook',
     social_media_url: 'www.facebook.com',
@@ -20,6 +25,19 @@ const createUser = async () => {
         email: 'admin@mail.com',
         password: '123456',
         username: 'admin',
+        profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+        age: 20,
+        phone_number: '62873647'
+    })
+}
+
+const createUser2 = async () => {
+    const result = await User.create({
+        id : 2,
+        full_name: 'user',
+        email: 'user@mail.com',
+        password: '123456',
+        username: 'user',
         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
         age: 20,
         phone_number: '62873647'
@@ -71,13 +89,18 @@ describe('POST /socialmedias', () => {
         expect(res.body.social_media).toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
     //error response
-    it('should send response with 400 status code', async () => {
+    it('should send response with 401 status code', async () => {
         const res = await request(app)
             .post('/socialmedias')
             .send(socialmedia)
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'jwt must be provided')
         expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
 })
 
@@ -122,7 +145,7 @@ describe('GET /socialmedias', () => {
 
     })
     //error response
-    it('should send response with 400 status code', async () => {
+    it('should send response with 401 status code', async () => {
         const res = await request(app)
             .get('/socialmedias')
         expect(res.statusCode).toEqual(401)
@@ -142,6 +165,7 @@ describe('PUT /socialmedias/:id', () => {
     beforeAll(async () => {
         try{
             await createUser()
+            await createUser2()
             await createSocialMedia()
         }catch{
             console.log(error);
@@ -175,14 +199,61 @@ describe('PUT /socialmedias/:id', () => {
         expect(res.body.social_medias[0]).toHaveProperty('name', socialmedia.name)
         expect(res.body.social_medias[0]).toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
-    //error response
-    it('should send response with 400 status code', async () => {
+    //error response (no token)
+    it('should send response with 401 status code', async () => {
         const res = await request(app)
             .put('/socialmedias/1')
             .send(socialmedia)
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'jwt must be provided')
         expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+
+    //error response (no Unauthorized)
+    it('should send response with 401 status code', async () => {
+        const response = await request(app)
+            .post('/users/login')
+            .send(login2)
+        const { access_token } = response.body
+        console.log(access_token);
+        const res = await request(app)
+            .put('/socialmedias/1')
+            .set('token', access_token)
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 2 not authorized to id 1')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const response = await request(app)
+            .post('/users/login')
+            .send(login)
+        const { access_token } = response.body
+        console.log(access_token);
+        const res = await request(app)
+            .put('/socialmedias/100')
+            .set('token', access_token)
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Social Media not found')
+        expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
 })
 
@@ -191,6 +262,7 @@ describe('DELETE /socialmedias/:id', () => {
     beforeAll(async () => {
         try{
             await createUser()
+            await createUser2()
             await createSocialMedia()
         }catch{
             console.log(error);
@@ -221,11 +293,51 @@ describe('DELETE /socialmedias/:id', () => {
         expect(res.body).toHaveProperty('status', 'success')
     })
     //error response
-    it('should send response with 400 status code', async () => {
+    it('should send response with 401 status code', async () => {
         const res = await request(app)
             .delete('/socialmedias/1')
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'jwt must be provided')
         expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+    
+    //error response (Unauthorized)
+    it('should send response with 401 status code', async () => {
+        await createSocialMedia()
+        const response = await request(app)
+            .post('/users/login')
+            .send(login2)
+        const { access_token } = response.body
+        console.log(access_token);
+        const res = await request(app)
+            .delete('/socialmedias/1')
+            .set('token', access_token)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 2 not authorized to id 1')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const response = await request(app)
+            .post('/users/login')
+            .send(login)
+        const { access_token } = response.body
+        console.log(access_token);
+        const res = await request(app)
+            .delete('/socialmedias/100')
+            .set('token', access_token)
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Social Media not found')
+        expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
     })
 })
