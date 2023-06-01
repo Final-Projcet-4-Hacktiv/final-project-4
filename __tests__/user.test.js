@@ -2,18 +2,20 @@ const request = require('supertest');
 const app = require('../app');
 const { User } = require('../models');
 
+let auth_token
+
 const login = {
-    email: 'admin@mail.com',
+    email: 'user@mail.com',
     password: '123456',
 }
 
 const createUser = async () => {
     const result = await User.create({
         id: 1,
-        full_name: 'admin',
-        email: 'admin@mail.com',
+        full_name: 'user',
+        email: 'user@mail.com',
         password: '123456',
-        username: 'admin',
+        username: 'user',
         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
         age: 20,
         phone_number: '081234567'
@@ -38,10 +40,10 @@ describe('POST /users/register', () => {
             request(app)
                 .post('/users/register')
                 .send({
-                    full_name: 'admin',
-                    email: 'admin@mail.com',
+                    full_name: 'user',
+                    email: 'user@mail.com',
                     password: '123456',
-                    username: 'admin',
+                    username: 'user',
                     profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
                     age: 20,
                     phone_number: '62873647'
@@ -54,9 +56,9 @@ describe('POST /users/register', () => {
                         console.log(res.body, 'ini res body');
                     }
                     expect(res.body).toHaveProperty('id', expect.any(Number));
-                    expect(res.body).toHaveProperty('email', 'admin@mail.com');
+                    expect(res.body).toHaveProperty('email', 'user@mail.com');
                     expect(res.body).toHaveProperty('password', expect.any(String));
-                    expect(res.body).toHaveProperty('username', 'admin');
+                    expect(res.body).toHaveProperty('username', 'user');
                     expect(res.body).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
                     expect(res.body).toHaveProperty('age', 20);
                     expect(res.body).toHaveProperty('phone_number', 62873647);
@@ -68,10 +70,10 @@ describe('POST /users/register', () => {
             request(app)
                 .post('/users/register')
                 .send({
-                    full_name: 'admin',
-                    email: 'admin',
+                    full_name: 'user',
+                    email: 'user',
                     password: '123456',
-                    username: 'admin',
+                    username: 'user',
                     profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
                     age: 20,
                     phone_number: '081234567'
@@ -86,9 +88,9 @@ describe('POST /users/register', () => {
                     expect(400)
                     expect(res.body).toHaveProperty('message', 'Invalid email format');
                     expect(res.body).not.toHaveProperty('id', expect.any(Number));
-                    expect(res.body).not.toHaveProperty('email', 'admin@mail.com');
+                    expect(res.body).not.toHaveProperty('email', 'user@mail.com');
                     expect(res.body).not.toHaveProperty('password', expect.any(String));
-                    expect(res.body).not.toHaveProperty('username', 'admin');
+                    expect(res.body).not.toHaveProperty('username', 'user');
                     expect(res.body).not.toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
                     expect(res.body).not.toHaveProperty('age', 20);
                     expect(res.body).not.toHaveProperty('phone_number', 62873647);
@@ -142,7 +144,7 @@ describe('POST /users/login', () => {
         request(app)
             .post('/users/login')
             .send({
-                email : 'admin@mail.com',
+                email : 'user@mail.com',
                 password : '1234567'
             })
             .expect(400)
@@ -193,14 +195,15 @@ describe('PUT /users/:id', () => {
                     done(err);
                 }
                 const token = res.body.access_token;
+                auth_token = token;
                 request(app)
                     .put(`/users/1`)
-                    .set('token', token)
+                    .set('token', auth_token)
                     .send({
-                        full_name: 'admin',
-                        email: 'admin@mail.com',
+                        full_name: 'user',
+                        email: 'user@mail.com',
                         password: '123456',
-                        username: 'admin',
+                        username: 'user',
                         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
                         age: 20,
                         phone_number: '62873647'
@@ -212,9 +215,9 @@ describe('PUT /users/:id', () => {
                         } else {
                             console.log(res.body, 'ini res body');
                         }
-                        expect(res.body).toHaveProperty('email', 'admin@mail.com');
+                        expect(res.body).toHaveProperty('email', 'user@mail.com');
                         expect(res.body).toHaveProperty('password', expect.any(String));
-                        expect(res.body).toHaveProperty('username', 'admin');
+                        expect(res.body).toHaveProperty('username', 'user');
                         expect(res.body).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
                         expect(res.body).toHaveProperty('age', 20);
                         expect(res.body).toHaveProperty('phone_number', 62873647);
@@ -239,10 +242,10 @@ describe('PUT /users/:id', () => {
                 request(app)
                     .put(`/users/1`)
                     .send({
-                        full_name: 'admin',
-                        email: 'admin@mail.com',
+                        full_name: 'user',
+                        email: 'user@mail.com',
                         password: '123456',
-                        username: 'admin',
+                        username: 'user',
                         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
                         age: 20,
                         phone_number: '62873647'
@@ -270,24 +273,14 @@ describe('PUT /users/:id', () => {
     })
     //error response user not found
     it('should send response with 404 status code', (done) => {
-        //login first
-        request(app)
-            .post('/users/login')
-            .send(login)
-            .expect(200)
-            .end((err, res) => {
-                if (err) {
-                    done(err);
-                }
-                const token = res.body.access_token;
                 request(app)
                     .put(`/users/2`)
-                    .set('token', token)
+                    .set('token', auth_token)
                     .send({
-                        full_name: 'admin',
-                        email: 'admin@mail.com',
+                        full_name: 'user',
+                        email: 'user@mail.com',
                         password: '123456',
-                        username: 'admin',
+                        username: 'user',
                         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
                         age: 20,
                         phone_number: '62873647'
@@ -311,7 +304,7 @@ describe('PUT /users/:id', () => {
                         done();
                     })
                 })
-    })
+    
  })
 
 //test api delete user
@@ -335,19 +328,9 @@ describe('DELETE /users/:id', () => {
     })
     //success response
     it('should send response with 200 status code', (done) => {
-        //login first
-        request(app)
-            .post('/users/login')
-            .send(login)
-            .expect(200)
-            .end((err, res) => {
-                if (err) {
-                    done(err);
-                }
-                const token = res.body.access_token;
                 request(app)
                     .delete(`/users/1`)
-                    .set('token', token)
+                    .set('token', auth_token)
                     .expect(200)
                     .end((err, res) => {
                         if (err) {
@@ -358,11 +341,10 @@ describe('DELETE /users/:id', () => {
                         expect(200);
                         expect(res.body).toHaveProperty('message');
                         expect(res.body).toHaveProperty('message', 'your account has been successfully deleted');
-                        expect(token).toEqual(expect.any(String));
+                        expect(auth_token).toEqual(expect.any(String));
                         expect(res.body).toHaveProperty('status', 'success');
                         done();
                     })
-            })
     })
     //error response (no token)
     it('should send response with 400 status code', (done) => {
@@ -384,30 +366,14 @@ describe('DELETE /users/:id', () => {
     
     //error response user not found
     it('should send response with 404 status code', async () => {
-        await request(app)
-            .post('/users/register')
-            .send({
-                full_name: 'admin',
-                email: 'admin@mail.com',
-                password: '123456',
-                username: 'admin',
-                profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
-                age: 20,
-                phone_number: '62873647'
-            })
-        //login first
-        const res = await request(app)
-            .post('/users/login')
-            .send(login)
-            .expect(200)
-            const { access_token } = res.body
+        await createUser();
          const response = await request(app)
                 .delete(`/users/10`)
-                .set('token', access_token)
+                .set('token', auth_token)
                 .expect(404)
                 expect(response.body).toHaveProperty('message', 'User not found');
-                expect(res.body).not.toHaveProperty('status', 'success');
-                expect(res.body).not.toHaveProperty('message', 'your account has been successfully deleted');
-                expect(res.body).not.toHaveProperty('message', 'jwt must be provided');
+                expect(response.body).not.toHaveProperty('status', 'success');
+                expect(response.body).not.toHaveProperty('message', 'your account has been successfully deleted');
+                expect(response.body).not.toHaveProperty('message', 'jwt must be provided');
     })
 })

@@ -3,14 +3,11 @@ const app = require('../app')
 const { User} = require('../models');
 const { SocialMedia } = require('../models');
 
-const login = {
-    email: 'admin@mail.com',
-    password: '123456',
-}
+let auth_token
 
-const login2 = {
-    email: 'user@mail.com',
-    password: '123456',  
+const login = {
+    email: 'user1@mail.com',
+    password: '123456',
 }
 
 const socialmedia = {
@@ -21,27 +18,29 @@ const socialmedia = {
 const createUser = async () => {
     const result = await User.create({
         id : 1,
-        full_name: 'admin',
-        email: 'admin@mail.com',
+        full_name: 'user1',
+        email: 'user1@mail.com',
         password: '123456',
-        username: 'admin',
+        username: 'user1',
         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
         age: 20,
         phone_number: '62873647'
     })
+    return result
 }
 
 const createUser2 = async () => {
     const result = await User.create({
         id : 2,
-        full_name: 'user',
-        email: 'user@mail.com',
+        full_name: 'user2',
+        email: 'user2@mail.com',
         password: '123456',
-        username: 'user',
+        username: 'user2',
         profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
         age: 20,
         phone_number: '62873647'
     })
+    return result
 }
 
 const createSocialMedia = async () => {
@@ -50,6 +49,15 @@ const createSocialMedia = async () => {
         name: 'facebook',
         social_media_url: 'www.facebook.com',
         UserId: 1
+    })
+}
+
+const createSocialMedia2 = async () => {
+    const result = await SocialMedia.create({
+        id : 2,
+        name: 'facebook',
+        social_media_url: 'www.facebook.com',
+        UserId: 2
     })
 }
 
@@ -77,7 +85,8 @@ describe('POST /socialmedias', () => {
             .post('/users/login')
             .send(login)
         const { body: { access_token } } = response
-        console.log(access_token);
+        auth_token = access_token
+        console.log(auth_token);
         const res = await request(app)
             .post('/socialmedias')
             .set('token', access_token)
@@ -124,18 +133,13 @@ describe('GET /socialmedias', () => {
     })
     //success response
     it('should send response with 200 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        console.log(access_token);
             await request(app)
             .post('/socialmedias')
-            .set('token', access_token)
+            .set('token', auth_token)
             .send(socialmedia)
         const res = await request(app)
             .get('/socialmedias')
-            .set('token', access_token)
+            .set('token', auth_token)
         expect(res.statusCode).toEqual(200)
         expect(res.body.social_medias[0]).toHaveProperty('id', expect.any(Number))
         expect(res.body.social_medias[0]).toHaveProperty('UserId', expect.any(Number))
@@ -167,6 +171,7 @@ describe('PUT /socialmedias/:id', () => {
             await createUser()
             await createUser2()
             await createSocialMedia()
+            await createSocialMedia2()
         }catch{
             console.log(error);
         }
@@ -181,14 +186,9 @@ describe('PUT /socialmedias/:id', () => {
     })
     //success response
     it('should send response with 200 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
             .put('/socialmedias/1')
-            .set('token', access_token)
+            .set('token', auth_token)
             .send({
                 name: 'facebook',
                 social_media_url: 'www.facebook.com'
@@ -216,35 +216,24 @@ describe('PUT /socialmedias/:id', () => {
 
     //error response (no Unauthorized)
     it('should send response with 401 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login2)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
-            .put('/socialmedias/1')
-            .set('token', access_token)
+            .put('/socialmedias/2')
+            .set('token', auth_token)
             .send(socialmedia)
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'User not authorized')
-        expect(res.body).toHaveProperty('devMessage', 'User with id 2 not authorized to id 1')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 1 not authorized to id 2')
         expect(typeof res.body).toEqual('object')
         expect(res.body).not.toHaveProperty('id', expect.any(Number))
         expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
         expect(res.body).not.toHaveProperty('name', socialmedia.name)
         expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
-
     //error response (not found)
     it('should send response with 404 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
             .put('/socialmedias/100')
-            .set('token', access_token)
+            .set('token', auth_token)
             .send(socialmedia)
         expect(res.statusCode).toEqual(404)
         expect(res.body).toHaveProperty('message', 'Social Media not found')
@@ -264,6 +253,7 @@ describe('DELETE /socialmedias/:id', () => {
             await createUser()
             await createUser2()
             await createSocialMedia()
+            await createSocialMedia2()
         }catch{
             console.log(error);
         }
@@ -278,14 +268,9 @@ describe('DELETE /socialmedias/:id', () => {
     })
     //success response
     it('should send response with 200 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
             .delete('/socialmedias/1')
-            .set('token', access_token)
+            .set('token', auth_token)
         expect(res.statusCode).toEqual(200)
         expect(res.body).toHaveProperty('message')
         expect(res.body).toHaveProperty('message', 'Your social media has been successfully deleted')
@@ -306,18 +291,12 @@ describe('DELETE /socialmedias/:id', () => {
     
     //error response (Unauthorized)
     it('should send response with 401 status code', async () => {
-        await createSocialMedia()
-        const response = await request(app)
-            .post('/users/login')
-            .send(login2)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
-            .delete('/socialmedias/1')
-            .set('token', access_token)
+            .delete('/socialmedias/2')
+            .set('token', auth_token)
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'User not authorized')
-        expect(res.body).toHaveProperty('devMessage', 'User with id 2 not authorized to id 1')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 1 not authorized to id 2')
         expect(typeof res.body).toEqual('object')
         expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
         expect(res.body).not.toHaveProperty('status', 'success')
@@ -325,14 +304,9 @@ describe('DELETE /socialmedias/:id', () => {
 
     //error response (not found)
     it('should send response with 404 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        console.log(access_token);
         const res = await request(app)
             .delete('/socialmedias/100')
-            .set('token', access_token)
+            .set('token', auth_token)
         expect(res.statusCode).toEqual(404)
         expect(res.body).toHaveProperty('message', 'Social Media not found')
         expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
