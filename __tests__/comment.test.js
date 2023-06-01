@@ -134,6 +134,24 @@ describe('POST /comments', () => {
         expect(res.body).not.toHaveProperty('UserId')
         expect(typeof res.body).toEqual('object')
     })
+    //error response (photoId not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .post('/comments')
+            .set('token', auth_token)
+            .send({
+                comment: 'test',
+                PhotoId: 100
+            })
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Photo not found')
+        expect(res.body).toHaveProperty('status', 'failed')
+        expect(res.body).not.toHaveProperty('comment')
+        expect(res.body).not.toHaveProperty('id')
+        expect(res.body).not.toHaveProperty('PhotoId')
+        expect(res.body).not.toHaveProperty('UserId')
+        expect(typeof res.body).toEqual('object')
+    })
 })
 
 //get comment
