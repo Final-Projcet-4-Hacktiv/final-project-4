@@ -119,3 +119,48 @@ describe('POST /photos', () => {
         expect(res.body).not.toHaveProperty('UserId', photo.UserId)
     })
 })
+
+//get all photos
+describe('GET /photos', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await Photo.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
+        }
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createPhoto()
+        }catch{
+            console.log(error);
+        }
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+            const res = await request(app)
+                .get('/photos')
+                .set('token', auth_token)
+            expect(res.status).toBe(200)
+            expect(res.body.photos[0]).toHaveProperty('id', expect.any(Number))
+            expect(res.body.photos[0]).toHaveProperty('title', photo.title)
+            expect(res.body.photos[0]).toHaveProperty('caption', photo.caption)
+            expect(res.body.photos[0]).toHaveProperty('poster_image_url', photo.poster_image_url)
+            expect(res.body.photos[0]).toHaveProperty('UserId', photo.UserId)
+    })
+    //error response
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .get('/photos')
+        expect(res.status).toBe(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('title', photo.title)
+        expect(res.body).not.toHaveProperty('caption', photo.caption)
+        expect(res.body).not.toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body).not.toHaveProperty('UserId', photo.UserId)
+    })
+})
