@@ -153,3 +153,50 @@ describe('POST /comments', () => {
         expect(typeof res.body).toEqual('object')
     })
 })
+
+//get comment
+describe('GET /comments', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await Photo.destroy({ where: {} })
+            await Comment.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
+        }
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createPhoto()
+            await createComment()
+        }catch{
+            console.log(error);
+        }
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .get('/comments')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(200)
+        expect(res.body.comments[0]).toHaveProperty('id')
+        expect(res.body.comments[0]).toHaveProperty('comment')
+        expect(res.body.comments[0]).toHaveProperty('PhotoId')
+        expect(res.body.comments[0]).toHaveProperty('UserId')
+        expect(typeof res.body).toEqual('object')
+    })
+    //error response
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .get('/comments')
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(res.body).not.toHaveProperty('comments')
+        expect(res.body).not.toHaveProperty('id')
+        expect(res.body).not.toHaveProperty('PhotoId')
+        expect(res.body).not.toHaveProperty('UserId')
+        expect(typeof res.body).toEqual('object')
+    })
+})
