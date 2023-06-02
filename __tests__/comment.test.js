@@ -282,3 +282,71 @@ describe('PUT /comments/:id', () => {
         expect(typeof res.body).toEqual('object')
     })
 })
+
+//delete comment
+describe('DELETE /comments/:id', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await Photo.destroy({ where: {} })
+            await Comment.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
+        }
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createUser2()
+            await createPhoto()
+            await createComment()
+            await createComment2()
+        }catch{
+            console.log(error);
+        }
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .delete('/comments/1')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(200)
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).toHaveProperty('status')
+        expect(res.body).toHaveProperty('status', 'success')
+        expect(res.body).toHaveProperty('message', 'Your Comment has been successfully deleted')
+    })
+    //error response (no token)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/comments/1')
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+    })
+
+    //error response (not authorized)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/comments/2')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty("devMessage", "User with id 1 not authorized to id 2")
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('status', 'success')
+        expect(res.body).not.toHaveProperty('message', 'Your Comment has been successfully deleted')
+    })
+    //error response (comment not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .delete('/comments/100')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Comment not found')
+        expect(res.body).toHaveProperty("devMessage", "Comment with id 100 not found")
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('status', 'success')
+        expect(res.body).not.toHaveProperty('message', 'Your Comment has been successfully deleted')
+    })
+})

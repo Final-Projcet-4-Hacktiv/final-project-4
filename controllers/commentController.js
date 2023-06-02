@@ -94,6 +94,7 @@ class commentController {
             const deleteComment = await Comment.destroy({ where: { id } });
             if (deleteComment) {
                 res.status(200).json({
+                    status: 'success',
                     message: 'Your Comment has been successfully deleted',
                 });
             }
