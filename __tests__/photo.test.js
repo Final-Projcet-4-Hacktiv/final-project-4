@@ -96,11 +96,11 @@ describe('POST /photos', () => {
             .set('token', auth_token)
             .send(photo)
         expect(res.status).toBe(201)
-        expect(res.body).toHaveProperty('id', expect.any(Number))
-        expect(res.body).toHaveProperty('title', photo.title)
-        expect(res.body).toHaveProperty('caption', photo.caption)
-        expect(res.body).toHaveProperty('poster_image_url', photo.poster_image_url)
-        expect(res.body).toHaveProperty('UserId', photo.UserId)
+        expect(res.body.photo).toHaveProperty('id', expect.any(Number))
+        expect(res.body.photo).toHaveProperty('title', photo.title)
+        expect(res.body.photo).toHaveProperty('caption', photo.caption)
+        expect(res.body.photo).toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body.photo).toHaveProperty('UserId', photo.UserId)
         // done()
     })
 
@@ -119,7 +119,6 @@ describe('POST /photos', () => {
         expect(res.body).not.toHaveProperty('UserId', photo.UserId)
     })
 })
-
 //get all photos
 describe('GET /photos', () => {
     afterAll(async () => {
@@ -163,4 +162,86 @@ describe('GET /photos', () => {
         expect(res.body).not.toHaveProperty('poster_image_url', photo.poster_image_url)
         expect(res.body).not.toHaveProperty('UserId', photo.UserId)
     })
+})
+
+//edit photo
+describe('PUT /photos/:id', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await Photo.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
+        }
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createUser2()
+            await createPhoto()
+            await createPhoto2()
+        }catch{
+            console.log(error);
+        }
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .put('/photos/1')
+            .set('token', auth_token)
+            .send(photo)
+        expect(res.status).toBe(200)
+        expect(res.body.photo).toHaveProperty('id', expect.any(Number))
+        expect(res.body.photo).toHaveProperty('title', photo.title)
+        expect(res.body.photo).toHaveProperty('caption', photo.caption)
+        expect(res.body.photo).toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body.photo).toHaveProperty('UserId', photo.UserId)
+        })
+    //error response (no token)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .put('/photos/1')
+            .send(photo)
+        expect(res.status).toBe(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('title', photo.title)
+        expect(res.body).not.toHaveProperty('caption', photo.caption)
+        expect(res.body).not.toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body).not.toHaveProperty('UserId', photo.UserId)
+    })
+    //error response (not authorized)
+    it('should send response with 401 status code', async () => {
+        
+        const res = await request(app)
+            .put('/photos/2')
+            .set('token', auth_token)
+            .send(photo)
+        expect(res.status).toBe(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', `User with id 1 not authorized to id 2`)
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('title', photo.title)
+        expect(res.body).not.toHaveProperty('caption', photo.caption)
+        expect(res.body).not.toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body).not.toHaveProperty('UserId', photo.UserId)
+        
+    })
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .put('/photos/100')
+            .set('token', auth_token)
+            .send(photo)
+        expect(res.status).toBe(404)
+        expect(res.body).toHaveProperty('message', 'Photo not found')
+        expect(res.body).toHaveProperty('devMessage', `Photo with id 100 not found`)
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('title', photo.title)
+        expect(res.body).not.toHaveProperty('caption', photo.caption)
+        expect(res.body).not.toHaveProperty('poster_image_url', photo.poster_image_url)
+        expect(res.body).not.toHaveProperty('UserId', photo.UserId)
+    })
+
 })
