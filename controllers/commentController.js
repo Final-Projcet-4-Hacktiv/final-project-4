@@ -42,14 +42,18 @@ class commentController {
     //create comments
     static async createComment(req, res) {
         try {
-            const UserId = res.locals.user.id;
             const { comment, PhotoId } = req.body;
             let data = {
-                UserId,
                 comment,
                 PhotoId,
             };
-
+            const photo = await Photo.findOne({ where: { id: PhotoId } });
+            if (!photo) {
+                return res.status(404).json({
+                    status: 'failed',
+                    message: 'Photo not found',
+                });
+            }
             const newComment = await Comment.create(data, { returning: true });
             if (newComment) {
                 res.status(201).json({
