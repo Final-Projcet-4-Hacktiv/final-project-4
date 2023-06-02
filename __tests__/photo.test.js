@@ -245,3 +245,68 @@ describe('PUT /photos/:id', () => {
     })
 
 })
+
+describe('DELETE /photos/:id', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await Photo.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
+        }
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createUser2()
+            await createPhoto()
+            await createPhoto2()
+        }catch{
+            console.log(error);
+        }
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .delete('/photos/1')
+            .set('token', auth_token)
+        expect(res.status).toBe(200)
+        expect(res.body).toHaveProperty('message')
+        expect(res.body).toHaveProperty('status')
+        expect(res.body).toHaveProperty('message', 'Your Photo has been successfully deleted')
+        expect(res.body).toHaveProperty('status', 'success')
+    }),
+    //error response (no token)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/photos/1')
+        expect(res.status).toBe(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(res.body).not.toHaveProperty('message', 'Your Photo has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    }),
+    //error response (not authorized)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/photos/2')
+            .set('token', auth_token)
+        expect(res.status).toBe(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', `User with id 1 not authorized to id 2`)
+        expect(res.body).not.toHaveProperty('message', 'Your Photo has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .delete('/photos/100')
+            .set('token', auth_token)
+        expect(res.status).toBe(404)
+        expect(res.body).toHaveProperty('message', 'Photo not found')
+        expect(res.body).toHaveProperty('devMessage', `Photo with id 100 not found`)
+        expect(res.body).not.toHaveProperty('message', 'Your Photo has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+})
