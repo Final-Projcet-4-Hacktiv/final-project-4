@@ -109,6 +109,7 @@ class photoController {
             });
             if (photo) {
                 res.status(200).json({
+                    status : 'success',
                     message: "Your Photo has been successfully deleted",
                 });
             }
