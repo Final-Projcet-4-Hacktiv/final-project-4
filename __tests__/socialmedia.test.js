@@ -1,466 +1,317 @@
-const app = require("../index");
-const request = require("supertest");
-const { User, Photo, Comment, SocialMedia } = require("../models");
-const { generateToken } = require("../helpers/jwt");
+const request = require('supertest')
+const app = require('../app')
+const { User} = require('../models');
+const { SocialMedia } = require('../models');
 
-const userData = {
-  full_name: "admin",
-  email: "admin@gmail.com",
-  username: "admin",
-  password: "123456",
-  profile_image_url: "admin.com",
-  age: 21,
-  phone_number: "82112324",
-};
+let auth_token
 
-describe("POST /socialmedias", () => {
-  let UserId;
-  let token;
+const login = {
+    email: 'user1@mail.com',
+    password: '123456',
+}
 
-  beforeAll(async () => {
-    try {
-      const user = await User.create(userData);
-      UserId = user.id;
-      token = generateToken({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-      });
-      const photoData = {
-        title: "coba",
-        caption: "coba",
-        poster_image_url: "coba.com",
-        UserId: UserId,
-      };
-      const photo = await Photo.create(photoData);
-      PhotoId = photo.id;
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  afterAll(async () => {
-    try {
-      await User.destroy({ where: {} });
-      await Photo.destroy({ where: {} });
-      await Comment.destroy({ where: {} });
-    } catch (err) {
-      console.log(err);
-    }
-  });
+const socialmedia = {
+    name: 'facebook',
+    social_media_url: 'www.facebook.com',
+}
 
-  // Success Testing Create Social Media
-  it("should send response with 201 status code", (done) => {
-    request(app)
-      .post("/socialmedias")
-      .set("token", token)
-      .send({
-        name: "test",
-        socialMediaUrl: "test.com",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+const createUser = async () => {
+    const result = await User.create({
+        id : 1,
+        full_name: 'user1',
+        email: 'user1@mail.com',
+        password: '123456',
+        username: 'user1',
+        profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+        age: 20,
+        phone_number: '62873647'
+    })
+    return result
+}
+
+const createUser2 = async () => {
+    const result = await User.create({
+        id : 2,
+        full_name: 'user2',
+        email: 'user2@mail.com',
+        password: '123456',
+        username: 'user2',
+        profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+        age: 20,
+        phone_number: '62873647'
+    })
+    return result
+}
+
+const createSocialMedia = async () => {
+    const result = await SocialMedia.create({
+        id : 1,
+        name: 'facebook',
+        social_media_url: 'www.facebook.com',
+        UserId: 1
+    })
+}
+
+const createSocialMedia2 = async () => {
+    const result = await SocialMedia.create({
+        id : 2,
+        name: 'facebook',
+        social_media_url: 'www.facebook.com',
+        UserId: 2
+    })
+}
+
+//post socialmedia
+describe('POST /socialmedias', () => {
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await SocialMedia.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(201);
-        expect(res.type).toEqual("application/json");
-        expect(res.body).toHaveProperty("social_media");
-        expect(res.body.social_media).toHaveProperty("id");
-        expect(res.body.social_media).toHaveProperty("UserId");
-        expect(res.body.social_media).toHaveProperty("name");
-        expect(res.body.social_media).toHaveProperty("social_media_url");
-        expect(res.body.social_media).toHaveProperty("updatedAt");
-        expect(res.body.social_media).toHaveProperty("createdAt");
-        done();
-      });
-  });
-
-  // Error for not including token
-  it("should send response with 401 status code", (done) => {
-    request(app)
-      .post("/socialmedias")
-      .send({
-        name: "test",
-        socialMediaUrl: "test.com",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    })
+    beforeAll(async () => {
+        try{
+            await createUser()
+        }catch{
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(401);
-        expect(res.statusType).toEqual(4);
-        expect(res.type).toEqual("application/json");
-        expect(res.unauthorized).toEqual(true);
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("message");
-        expect(res.body.name).toEqual("JsonWebTokenError");
-        expect(res.body.message).toEqual("jwt must be provided");
-        done();
-      });
-  });
+    })
 
-  // Error because the column is empties
-  it("should send response with 500 status code", (done) => {
-    request(app)
-      .post("/socialmedias")
-      .set("token", token)
-      .send({
-        name: "",
-        socialMediaUrl: "",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    //success response
+    it('should send response with 201 status code', async () => {
+        const response = await request(app)
+            .post('/users/login')
+            .send(login)
+        const { body: { access_token } } = response
+        auth_token = access_token
+        console.log(auth_token);
+        const res = await request(app)
+            .post('/socialmedias')
+            .set('token', access_token)
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(201)
+        expect(res.body.social_media).toHaveProperty('id', expect.any(Number))
+        expect(res.body.social_media).toHaveProperty('UserId', expect.any(Number))
+        expect(res.body.social_media).toHaveProperty('name', socialmedia.name)
+        expect(res.body.social_media).toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+    //error response
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .post('/socialmedias')
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+})
+
+//get socialmedia
+describe('GET /socialmedias', () => {
+    beforeAll(async () => {
+        try{
+            await createUser()
+            // await createSocialMedia()
+        }catch{
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(500);
-        expect(res.type).toEqual("application/json");
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("errors");
-        expect(res.body.name).toEqual("SequelizeValidationError");
-        expect(res.body.errors[0].message).toEqual("Name is required");
-        expect(res.body.errors[0].type).toEqual("Validation error");
-        done();
-      });
-  });
-});
-
-describe("GET /socialmedias", () => {
-  let token;
-
-  beforeAll(async () => {
-    try {
-      const user = await User.create(userData);
-      token = generateToken({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  afterAll(async () => {
-    try {
-      await User.destroy({ where: {} });
-    } catch (err) {
-      console.log(err);
-    }
-  });
-
-  // Success Testing Get Social Media
-  it("should send response with 200 status code", (done) => {
-    request(app)
-      .get("/socialmedias")
-      .set("token", token)
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    })
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await SocialMedia.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(200);
-        expect(res.statusType).toEqual(2);
-        expect(res.type).toEqual("application/json");
-        expect(res.ok).toEqual(true);
-        expect(res.body).toHaveProperty("social_medias");
-        expect(typeof res.body.social_medias).toEqual("object");
-        done();
-      });
-  });
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+            await request(app)
+            .post('/socialmedias')
+            .set('token', auth_token)
+            .send(socialmedia)
+        const res = await request(app)
+            .get('/socialmedias')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(200)
+        expect(res.body.social_medias[0]).toHaveProperty('id', expect.any(Number))
+        expect(res.body.social_medias[0]).toHaveProperty('UserId', expect.any(Number))
+        expect(res.body.social_medias[0]).toHaveProperty('name', socialmedia.name)
+        expect(res.body.social_medias[0]).toHaveProperty('social_media_url', socialmedia.social_media_url)
+        expect(res.body.social_medias[0]).toHaveProperty('User')
 
-  // Error for not including token
-  it("should send response with 401 status code", (done) => {
-    request(app)
-      .get("/socialmedias")
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    })
+    //error response
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .get('/socialmedias')
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+        expect(res.body).not.toHaveProperty('User')
+    })
+})
+
+//edit socialmedia
+describe('PUT /socialmedias/:id', () => {
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createUser2()
+            await createSocialMedia()
+            await createSocialMedia2()
+        }catch{
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(401);
-        expect(res.statusType).toEqual(4);
-        expect(res.type).toEqual("application/json");
-        expect(res.unauthorized).toEqual(true);
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("message");
-        expect(res.body.name).toEqual("JsonWebTokenError");
-        expect(res.body.message).toEqual("jwt must be provided");
-        done();
-      });
-  });
-});
-
-describe("PUT /socialmedias/:id", () => {
-  let UserId;
-  let token;
-  let socmedId;
-
-  beforeAll(async () => {
-    try {
-      const user = await User.create(userData);
-      UserId = user.id;
-      token = generateToken({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-      });
-      socmedData = {
-        name: "tester",
-        social_media_url: "tester.com",
-        UserId,
-      };
-      const socmed = await SocialMedia.create(socmedData);
-      socmedId = socmed.id;
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  afterAll(async () => {
-    try {
-      await User.destroy({ where: {} });
-      await SocialMedia.destroy({ where: {} });
-    } catch (err) {
-      console.log(err);
-    }
-  });
-
-  // Error for not including token
-  it("should send response with 401 status code", (done) => {
-    request(app)
-      .put("/socialmedias/" + socmedId)
-      .send({
-        name: "tester_update",
-        social_media_url: "testeredit.com",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    })
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await SocialMedia.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(401);
-        expect(res.statusType).toEqual(4);
-        expect(res.type).toEqual("application/json");
-        expect(res.unauthorized).toEqual(true);
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("message");
-        expect(res.body.name).toEqual("JsonWebTokenError");
-        expect(res.body.message).toEqual("jwt must be provided");
-        done();
-      });
-  });
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .put('/socialmedias/1')
+            .set('token', auth_token)
+            .send({
+                name: 'facebook',
+                social_media_url: 'www.facebook.com'
+            })
+        expect(res.statusCode).toEqual(200)
+        expect(res.body.social_medias[0]).toHaveProperty('id', expect.any(Number))
+        expect(res.body.social_medias[0]).toHaveProperty('UserId', expect.any(Number))
+        expect(res.body.social_medias[0]).toHaveProperty('name', socialmedia.name)
+        expect(res.body.social_medias[0]).toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+    //error response (no token)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .put('/socialmedias/1')
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
 
-  // Error because social_media_url field did not pass the validation
-  it("should send response with 500 status code", (done) => {
-    request(app)
-      .put("/socialmedias/" + socmedId)
-      .set("token", token)
-      .send({
-        name: "tester_update",
-        social_media_url: "testeredit",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    //error response (no Unauthorized)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .put('/socialmedias/2')
+            .set('token', auth_token)
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 1 not authorized to id 2')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .put('/socialmedias/100')
+            .set('token', auth_token)
+            .send(socialmedia)
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Social Media not found')
+        expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+})
+
+//delete socialmedia
+describe('DELETE /socialmedias/:id', () => {
+    beforeAll(async () => {
+        try{
+            await createUser()
+            await createUser2()
+            await createSocialMedia()
+            await createSocialMedia2()
+        }catch{
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(500);
-        expect(res.type).toEqual("application/json");
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("errors");
-        expect(res.body.errors[0]).toHaveProperty("message");
-        expect(res.body.errors[0]).toHaveProperty("type");
-
-        done();
-      });
-  });
-
-  // Error because socmedId not found
-  it("should send response with 404 status code", (done) => {
-    request(app)
-      .put("/socialmedias/" + 999)
-      .set("token", token)
-      .send({
-        name: "tester_update",
-        social_media_url: "testeredit.com",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
+    })
+    afterAll(async () => {
+        try {
+            await User.destroy({ where: {} })
+            await SocialMedia.destroy({ where: {} })
+        } catch (error) {
+            console.log(error);
         }
-        // Min 5 expects
-        expect(res.status).toEqual(404);
-        expect(res.type).toEqual("application/json");
-        expect(typeof res.body).toEqual("object");
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("devMessage");
-        expect(res.body.name).toEqual("Data not found");
-        expect(res.body.devMessage).toEqual(
-          "Social Media with id 999 not found"
-        );
-        done();
-      });
-  });
+    })
+    //success response
+    it('should send response with 200 status code', async () => {
+        const res = await request(app)
+            .delete('/socialmedias/1')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(200)
+        expect(res.body).toHaveProperty('message')
+        expect(res.body).toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).toHaveProperty('status')
+        expect(res.body).toHaveProperty('status', 'success')
+    })
+    //error response
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/socialmedias/1')
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'jwt must be provided')
+        expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+    
+    //error response (Unauthorized)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .delete('/socialmedias/2')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(401)
+        expect(res.body).toHaveProperty('message', 'User not authorized')
+        expect(res.body).toHaveProperty('devMessage', 'User with id 1 not authorized to id 2')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
 
-  // Success Testing Update Comment
-  it("should send response with 200 status code", (done) => {
-    request(app)
-      .put("/socialmedias/" + socmedId)
-      .set("token", token)
-      .send({
-        name: "tester_update",
-        social_media_url: "testeredit.com",
-        UserId,
-      })
-      .end(function (err, res) {
-        if (err) {
-          done(err);
-        }
-        // Min 5 expects
-        expect(res.status).toEqual(200);
-        expect(res.statusType).toEqual(2);
-        expect(res.ok).toEqual(true);
-        expect(res.body).toHaveProperty("social_media");
-        expect(res.type).toEqual("application/json");
-        expect(typeof res.body.social_media).toEqual("object");
-        console.log(res.body.social_media);
-        expect(res.body.social_media[0]).toHaveProperty("id");
-        expect(res.body.social_media[0]).toHaveProperty("name");
-        expect(res.body.social_media[0]).toHaveProperty("social_media_url");
-        expect(res.body.social_media[0]).toHaveProperty("UserId");
-        expect(res.body.social_media[0]).toHaveProperty("createdAt");
-        expect(res.body.social_media[0]).toHaveProperty("updatedAt");
-
-        done();
-      });
-  });
-});
-
-describe("DELETE /socialmedias/:id", () => {
-  let UserId;
-  let token;
-  let socmedId;
-
-  beforeAll(async () => {
-    try {
-      const user = await User.create(userData);
-      UserId = user.id;
-      token = generateToken({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-      });
-      socmedData = {
-        name: "tester",
-        social_media_url: "tester.com",
-        UserId,
-      };
-      const socmed = await SocialMedia.create(socmedData);
-      socmedId = socmed.id;
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  afterAll(async () => {
-    try {
-      await User.destroy({ where: {} });
-      await SocialMedia.destroy({ where: {} });
-    } catch (err) {
-      console.log(err);
-    }
-  });
-
-  // Error for not including token
-  it("should send response with 401 status code", (done) => {
-    request(app)
-      .delete("/socialmedias/" + socmedId)
-      .end(function (err, res) {
-        if (err) {
-          done(err);
-        }
-        // Min 5 expects
-        expect(res.status).toEqual(401);
-        expect(res.statusType).toEqual(4);
-        expect(res.type).toEqual("application/json");
-        expect(res.unauthorized).toEqual(true);
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("message");
-        expect(res.body.name).toEqual("JsonWebTokenError");
-        expect(res.body.message).toEqual("jwt must be provided");
-        done();
-      });
-  });
-
-  // Error because did not input socmedId params
-  it("should send response with 404 status code", (done) => {
-    request(app)
-      .delete("/socialmedias/")
-      .set("token", token)
-      .end(function (err, res) {
-        if (err) {
-          done(err);
-        }
-        expect(res.status).toEqual(404);
-        expect(res.notFound).toEqual(true);
-        expect(res.type).toEqual("application/json");
-        expect(res.body).toHaveProperty("code");
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("msg");
-        expect(res.body.name).toEqual("Error");
-        expect(res.body.code).toEqual(404);
-        expect(res.body.msg).toEqual("Not found");
-        done();
-      });
-  });
-
-  // Error because socmedId not found
-  it("should send response with 404 status code", (done) => {
-    request(app)
-      .put("/socialmedias/" + 999)
-      .set("token", token)
-      .end(function (err, res) {
-        if (err) {
-          done(err);
-        }
-        // Min 5 expects
-        expect(res.status).toEqual(404);
-        expect(res.type).toEqual("application/json");
-        expect(typeof res.body).toEqual("object");
-        expect(res.body).toHaveProperty("name");
-        expect(res.body).toHaveProperty("devMessage");
-        expect(res.body.name).toEqual("Data not found");
-        expect(res.body.devMessage).toEqual(
-          "Social media with id 999 not found"
-        );
-        done();
-      });
-  });
-
-  // Success Testing Delete Comment
-  it("should send response with 200 status code", (done) => {
-    request(app)
-      .delete("/socialmedias/" + socmedId)
-      .set("token", token)
-      .end(function (err, res) {
-        if (err) {
-          done(err);
-        }
-        // Min 5 expects
-        expect(res.status).toEqual(200);
-        expect(res.statusType).toEqual(2);
-        expect(res.type).toEqual("application/json");
-        expect(res.body).toHaveProperty("message");
-        expect(typeof res.body).toEqual("object");
-        expect(res.body.message).toEqual(
-          "Your social media has been successfully deleted"
-        );
-        done();
-      });
-  });
-});
+    //error response (not found)
+    it('should send response with 404 status code', async () => {
+        const res = await request(app)
+            .delete('/socialmedias/100')
+            .set('token', auth_token)
+        expect(res.statusCode).toEqual(404)
+        expect(res.body).toHaveProperty('message', 'Social Media not found')
+        expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('message', 'Your social media has been successfully deleted')
+        expect(res.body).not.toHaveProperty('status', 'success')
+    })
+})
