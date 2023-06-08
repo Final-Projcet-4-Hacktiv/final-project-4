@@ -74,6 +74,12 @@ describe('POST /socialmedias', () => {
     beforeAll(async () => {
         try{
             await createUser()
+            const response = await request(app)
+            .post('/users/login')
+            .send(login)
+                const { body: { access_token } } = response
+                auth_token = access_token
+                console.log(auth_token);
         }catch{
             console.log(error);
         }
@@ -81,15 +87,9 @@ describe('POST /socialmedias', () => {
 
     //success response
     it('should send response with 201 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { body: { access_token } } = response
-        auth_token = access_token
-        console.log(auth_token);
         const res = await request(app)
             .post('/socialmedias')
-            .set('token', access_token)
+            .set('token', auth_token)
             .send(socialmedia)
         expect(res.statusCode).toEqual(201)
         expect(res.body.social_media).toHaveProperty('id', expect.any(Number))

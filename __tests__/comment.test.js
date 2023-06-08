@@ -97,18 +97,18 @@ describe('POST /comments', () => {
         try{
             await createUser()
             await createPhoto()
+            const response = await request(app)
+            .post('/users/login')
+            .send(login)
+                const { access_token } = response.body
+                auth_token = access_token
+                console.log(auth_token);
         }catch{
             console.log(error);
         }
     })
     //success response
     it('should send response with 201 status code', async () => {
-        const response = await request(app)
-            .post('/users/login')
-            .send(login)
-        const { access_token } = response.body
-        auth_token = access_token
-        console.log(auth_token);
         const res = await request(app)
             .post('/comments')
             .set('token', auth_token)

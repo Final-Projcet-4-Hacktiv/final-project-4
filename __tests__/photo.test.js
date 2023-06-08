@@ -10,11 +10,6 @@ const body = {
   password: "123456",
 };
 
-const body2 = {
-  email: "user2@mail.com",
-  password: "123456",
-}
-
 const photo = {
   title: "test",
   caption: "test",
@@ -89,16 +84,16 @@ describe("POST /photos", () => {
     try {
       await createUser();
       await createUser2();
+      const response = await request(app).post("/users/login").send(body);
+      const { access_token } = response.body;
+      console.log(access_token);
+      auth_token = access_token;
     } catch {
       console.log(error);
     }
   });
   //success response
   it("should send response with 201 status code", async () => {
-    const response = await request(app).post("/users/login").send(body);
-    const { access_token } = response.body;
-    console.log(access_token);
-    auth_token = access_token;
     const res = await request(app)
       .post("/photos")
       .set("token", auth_token)
@@ -170,7 +165,8 @@ describe("GET /photos", () => {
   });
   //success response
   it("should send response with 200 status code", async () => {
-    const res = await request(app).get("/photos").set("token", auth_token);
+    const res = await request(app).get("/photos")
+    .set("token", auth_token);
     expect(res.status).toBe(200);
     expect(res.body.photos[0]).toHaveProperty("id", expect.any(Number));
     expect(res.body.photos[0]).toHaveProperty("title", photo.title);
