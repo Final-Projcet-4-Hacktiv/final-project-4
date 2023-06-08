@@ -55,17 +55,15 @@ describe('POST /users/register', () => {
                     } else {
                         console.log(res.body, 'ini res body');
                     }
-                    expect(res.body).toHaveProperty('id', expect.any(Number));
-                    expect(res.body).toHaveProperty('email', 'user@mail.com');
-                    expect(res.body).toHaveProperty('password', expect.any(String));
-                    expect(res.body).toHaveProperty('username', 'user');
-                    expect(res.body).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
-                    expect(res.body).toHaveProperty('age', 20);
-                    expect(res.body).toHaveProperty('phone_number', 62873647);
+                    expect(res.body.user).toHaveProperty('email', 'user@mail.com');
+                    expect(res.body.user).toHaveProperty('username', 'user');
+                    expect(res.body.user).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
+                    expect(res.body.user).toHaveProperty('age', 20);
+                    expect(res.body.user).toHaveProperty('phone_number', 62873647);
                     done();
                 })
         });
-        //error test
+        //error test (invalid email format)
         it('should send response with 400 status code', (done) => {
             request(app)
                 .post('/users/register')
@@ -97,6 +95,73 @@ describe('POST /users/register', () => {
                     done();
                 })
         });
+        //error test (email already exist)
+        it('should send response with 400 status code', (done) => {
+            request(app)
+                .post('/users/register')
+                .send({
+                    id: 1,
+                    full_name: 'user',
+                    email: 'user@mail.com',
+                    password: '123456',
+                    username: 'user',
+                    profile_img_url: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.',
+                    age: 20,
+                    phone_number: '081234567'
+                })
+                .expect(400)
+                .end((err, res) => {
+                    if (err) {
+                        done(err);
+                    } else {
+                        console.log(res.body, 'ini res body');
+                    }
+                    expect(400)
+                    expect(res.body.errors[0]).toHaveProperty('message', 'Email already registered');
+                    expect(res.body.errors[0]).toHaveProperty('type', 'unique violation')
+                    expect(res.body).not.toHaveProperty('id', expect.any(Number));
+                    expect(res.body).not.toHaveProperty('email', 'user@mail.com');
+                    expect(res.body).not.toHaveProperty('password', expect.any(String));
+                    expect(res.body).not.toHaveProperty('username', 'user');
+                    expect(res.body).not.toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
+                    expect(res.body).not.toHaveProperty('age', 20);
+                    expect(res.body).not.toHaveProperty('phone_number', 62873647);
+                    done();
+                }) 
+        })
+        //error response (invalid url)
+        it('should send response with 400 status code', (done) => {
+            request(app)
+                .post('/users/register')
+                .send({
+                    full_name: 'user',
+                    email: 'user@mail.com',
+                    password: '123456',
+                    username: 'user',
+                    profile_img_url: 'hehehe',
+                    age: 20,
+                    phone_number: '081234567'
+                })
+                .expect(400)
+                .end((err, res) => {
+                    if (err) {
+                        done(err);
+                    } else {
+                        console.log(res.body, 'ini res body');
+                    }
+                    expect(400)
+                    expect(res.body.errors[0]).toHaveProperty('message', 'Profile image URL must be in URL format');
+                    expect(res.body.errors[0]).toHaveProperty('type', 'Validation error');
+                    expect(res.body).not.toHaveProperty('id', expect.any(Number));
+                    expect(res.body).not.toHaveProperty('email', 'user@mail.com');
+                    expect(res.body).not.toHaveProperty('password', expect.any(String));
+                    expect(res.body).not.toHaveProperty('username', 'user');
+                    expect(res.body).not.toHaveProperty('profile_img_url', 'hehehe');
+                    expect(res.body).not.toHaveProperty('age', 20);
+                    expect(res.body).not.toHaveProperty('phone_number', 62873647);
+                    done();
+                })
+        })
     })
 
 // //test api login
@@ -215,12 +280,11 @@ describe('PUT /users/:id', () => {
                         } else {
                             console.log(res.body, 'ini res body');
                         }
-                        expect(res.body).toHaveProperty('email', 'user@mail.com');
-                        expect(res.body).toHaveProperty('password', expect.any(String));
-                        expect(res.body).toHaveProperty('username', 'user');
-                        expect(res.body).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
-                        expect(res.body).toHaveProperty('age', 20);
-                        expect(res.body).toHaveProperty('phone_number', 62873647);
+                        expect(res.body.user).toHaveProperty('email', 'user@mail.com');
+                        expect(res.body.user).toHaveProperty('username', 'user');
+                        expect(res.body.user).toHaveProperty('profile_img_url', 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pngwing.');
+                        expect(res.body.user).toHaveProperty('age', 20);
+                        expect(res.body.user).toHaveProperty('phone_number', 62873647);
                         done();
                     })
             })
@@ -304,7 +368,40 @@ describe('PUT /users/:id', () => {
                         done();
                     })
                 })
-    
+    //error response (invalid url)
+    it('should send response with 400 status code', (done) => {
+                request(app)
+                    .put(`/users/1`)
+                    .set('token', auth_token)
+                    .send({
+                        full_name: 'user',
+                        email: 'user@mail.com',
+                        password: '123456',
+                        username: 'user',
+                        profile_img_url: 'hehehe',
+                        age: 20,
+                        phone_number: '62873647'
+                    })
+                    .expect(400)
+                    .end((err, res) => {
+                        if (err) {
+                            done(err);
+                        } else {
+                            console.log(res.body, 'ini res body');
+                        }
+                        expect(res.body.errors[0]).toHaveProperty('message', 'Profile image URL must be in URL format');
+                        expect(res.body.errors[0]).toHaveProperty('type', 'Validation error');
+                        expect(res.body).not.toHaveProperty('access_token', expect.any(String));
+                        expect(res.body).not.toHaveProperty('id');
+                        expect(res.body).not.toHaveProperty('email');
+                        expect(res.body).not.toHaveProperty('password');
+                        expect(res.body).not.toHaveProperty('username');
+                        expect(res.body).not.toHaveProperty('profile_img_url');
+                        expect(res.body).not.toHaveProperty('age');
+                        expect(res.body).not.toHaveProperty('phone_number');
+                        done();
+                    })
+    })
  })
 
 //test api delete user

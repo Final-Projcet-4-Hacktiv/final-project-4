@@ -97,7 +97,7 @@ describe('POST /socialmedias', () => {
         expect(res.body.social_media).toHaveProperty('name', socialmedia.name)
         expect(res.body.social_media).toHaveProperty('social_media_url', socialmedia.social_media_url)
     })
-    //error response
+    //error response (no token)
     it('should send response with 401 status code', async () => {
         const res = await request(app)
             .post('/socialmedias')
@@ -105,6 +105,25 @@ describe('POST /socialmedias', () => {
         expect(res.statusCode).toEqual(401)
         expect(res.body).toHaveProperty('message', 'jwt must be provided')
         expect(res.body).toHaveProperty('name', 'JsonWebTokenError')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+
+    //error response ( invalid url)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .post('/socialmedias')
+            .set('token', auth_token)
+            .send({
+                name: 'yotube',
+                social_media_url: 'youtube',
+            })
+        expect(res.statusCode).toEqual(401)
+        expect(res.body.errors[0]).toHaveProperty('message', 'Social media URL must be in URL format')
+        expect(res.body.errors[0]).toHaveProperty('type', 'Validation error')
         expect(typeof res.body).toEqual('object')
         expect(res.body).not.toHaveProperty('id', expect.any(Number))
         expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
@@ -238,6 +257,25 @@ describe('PUT /socialmedias/:id', () => {
         expect(res.statusCode).toEqual(404)
         expect(res.body).toHaveProperty('message', 'Social Media not found')
         expect(res.body).toHaveProperty('devMessage', 'Social Media with id 100 not found')
+        expect(typeof res.body).toEqual('object')
+        expect(res.body).not.toHaveProperty('id', expect.any(Number))
+        expect(res.body).not.toHaveProperty('UserId', expect.any(Number))
+        expect(res.body).not.toHaveProperty('name', socialmedia.name)
+        expect(res.body).not.toHaveProperty('social_media_url', socialmedia.social_media_url)
+    })
+
+    //error response (invalid url)
+    it('should send response with 401 status code', async () => {
+        const res = await request(app)
+            .put('/socialmedias/1')
+            .set('token', auth_token)
+            .send({
+                name: 'facebook',
+                social_media_url: 'facebook'
+            })
+        expect(res.statusCode).toEqual(401)
+        expect(res.body.errors[0]).toHaveProperty('message', 'Social media URL must be in URL format')
+        expect(res.body.errors[0]).toHaveProperty('type', 'Validation error')
         expect(typeof res.body).toEqual('object')
         expect(res.body).not.toHaveProperty('id', expect.any(Number))
         expect(res.body).not.toHaveProperty('UserId', expect.any(Number))

@@ -10,6 +10,11 @@ const body = {
   password: "123456",
 };
 
+const body2 = {
+  email: "user2@mail.com",
+  password: "123456",
+}
+
 const photo = {
   title: "test",
   caption: "test",
@@ -83,6 +88,7 @@ describe("POST /photos", () => {
   beforeAll(async () => {
     try {
       await createUser();
+      await createUser2();
     } catch {
       console.log(error);
     }
@@ -109,7 +115,7 @@ describe("POST /photos", () => {
     // done()
   });
 
-  //error response
+  //error response (no token)
   it("should send response with 401 status code", async () => {
     const res = await request(app).post("/photos").send(photo);
     expect(res.status).toBe(401);
@@ -124,7 +130,26 @@ describe("POST /photos", () => {
     );
     expect(res.body).not.toHaveProperty("UserId", photo.UserId);
   });
+
+  //error response (invalid url)
+  it("should send response with 401 status code", async () => {
+    const res = await request(app)
+      .post("/photos")
+      .set("token", auth_token)
+      .send({ ...photo, poster_image_url: "test" });
+    expect(res.status).toBe(401);
+    expect(res.body.errors[0]).toHaveProperty("message", "Poster image URL must be in URL format");
+    expect(res.body).not.toHaveProperty("id", expect.any(Number));
+    expect(res.body).not.toHaveProperty("title", photo.title);
+    expect(res.body).not.toHaveProperty("caption", photo.caption);
+    expect(res.body).not.toHaveProperty(
+      "poster_image_url",
+      photo.poster_image_url
+    );
+    expect(res.body).not.toHaveProperty("UserId", photo.UserId);
+  });
 });
+
 //get all photos
 describe("GET /photos", () => {
   afterAll(async () => {
@@ -266,6 +291,25 @@ describe("PUT /photos/:id", () => {
     );
     expect(res.body).not.toHaveProperty("UserId", photo.UserId);
   });
+
+  //error response (invalid url)
+  it("should send response with 401 status code", async () => {
+    const res = await request(app)
+      .put("/photos/1")
+      .set("token", auth_token)
+      .send({ ...photo, poster_image_url: "hehehe" });
+    expect(res.status).toBe(401);
+    expect(res.body.errors[0]).toHaveProperty('message', 'Poster image URL must be in URL format')
+    expect(res.body.errors[0]).toHaveProperty('type', 'Validation error')
+    expect(res.body).not.toHaveProperty("id", expect.any(Number));
+    expect(res.body).not.toHaveProperty("title", photo.title);
+    expect(res.body).not.toHaveProperty("caption", photo.caption);
+    expect(res.body).not.toHaveProperty(
+      "poster_image_url",
+      photo.poster_image_url
+    );
+    expect(res.body).not.toHaveProperty("UserId", photo.UserId);
+  })
 });
 
 describe("DELETE /photos/:id", () => {

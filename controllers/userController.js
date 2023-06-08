@@ -60,15 +60,14 @@ class userController {
         phone_number,
       });
       const response = {
-        id: data.id,
         email: data.email,
+        full_name: data.full_name,
         username: data.username,
-        password: data.password,
         profile_img_url: data.profile_img_url,
         age: data.age,
         phone_number: data.phone_number,
       };
-      res.status(201).json(response);
+      res.status(201).json({ user: response });
     } catch (err) {
       // res.status(err?.code || 500).json(err);
       return res.status(400).json(err);
@@ -117,39 +116,44 @@ class userController {
     }
   }
 
-  //edit user with hash password
-  static async updateUser(req, res, next) {
-    try {
-      const id = req.params.id;
-      const {
-        full_name,
-        email,
-        password,
-        username,
-        profile_img_url,
-        age,
-        phone_number,
-      } = req.body;
-      const hashedPassword = hashPassword(password);
-     const updateUser = await User.update({
-        full_name,
-        email,
-        password: hashedPassword,
-        username,
-        profile_img_url,
-        age,
-        phone_number,
-     },{
-        where: {
-          id: id,
-        }, returning: true
-     });
-      res.status(200).json(updateUser[1][0]);
-    } catch (err) {
-      // console.log(err);
-      next(err);
+ //edit user with hash password
+ static async updateUser(req, res, next) {
+  try {
+    const id = req.params.id;
+    const {
+      full_name,
+      email,
+      username,
+      profile_img_url,
+      age,
+      phone_number,
+    } = req.body;
+   const updateUser = await User.update({
+      full_name,
+      email,
+      username,
+      profile_img_url,
+      age,
+      phone_number,
+   },{
+      where: {
+        id: id,
+      }, returning: true
+   });
+    const response = {
+      id: updateUser[1][0].id,
+      full_name: updateUser[1][0].full_name,
+      email: updateUser[1][0].email,
+      username: updateUser[1][0].username,
+      profile_img_url: updateUser[1][0].profile_img_url,
+      age: updateUser[1][0].age,
+      phone_number: updateUser[1][0].phone_number,
     }
+    res.status(200).json({user : response});
+  } catch (err) {
+    return res.status(400).json(err);
   }
+}
 
   //delete user
   static async deleteUser(req, res, next) {

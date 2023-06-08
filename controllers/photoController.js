@@ -58,7 +58,6 @@ class photoController {
                 caption,
                 poster_image_url,
             };
-
             const newPhoto = await Photo.create(data, { returning: true });
             if (newPhoto) {
                 res.status(201).json({
